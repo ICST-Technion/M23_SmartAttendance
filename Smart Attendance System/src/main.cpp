@@ -4,6 +4,9 @@
 #include <MFRC522.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <SPIFFS.h>
+#include <Preferences.h>
+#include <WiFi.h>
 
 // Screen consts.
 const uint8_t DISPLAY_WIDTH = 128;
@@ -28,6 +31,53 @@ Adafruit_SSD1306 display(DISPLAY_WIDTH, DISPLAY_HEIGHT, &Wire, DISPLAY_RST);
 
 uint8_t i = 0;
 bool keyStillPressed = false;
+
+void write_text_to_display() {
+   if(!SPIFFS.begin(true)) {
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
+  }
+
+  File file = SPIFFS.open("/test.txt");
+  if(!file){
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+
+  while(file.available()){
+    int ch = file.read();
+    Serial.write(ch);
+    display.print(static_cast<char>(ch));
+  }
+  display.display();
+  file.close();
+}
+
+void init_digit_file() {
+  SPIFFS.begin();
+  File file = SPIFFS.open("/prev_keys.txt");
+  while(file.available()){
+    int ch = file.read();
+    Serial.write(ch);
+    display.print(static_cast<char>(ch));
+  }
+  display.display();
+  file.close();
+  file = SPIFFS.open("/prev_keys.txt", "w");
+  file.close();
+}
+
+void init_wifi() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin("TechPublic");
+  Serial.print("Connecting to WiFi ..");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print('.');
+    delay(1000);
+  }
+  Serial.println(WiFi.localIP());
+}
 
 void setup() {
   Serial.begin(9600);
@@ -63,6 +113,15 @@ void setup() {
     display.println("Please Enter ID:");
     display.display();
   }
+
+  init_wifi();
+}
+
+void write_to_file(const char ch) {
+  File file = SPIFFS.open("/prev_keys.txt", "a");
+  file.seek(file.size());
+  file.write(ch);
+  file.close();
 }
 
 void keypadLoop() {
@@ -72,6 +131,7 @@ void keypadLoop() {
     Serial.print(ch);
     Serial.println(" pressed.");
     display.print(ch);
+    write_to_file(ch);
     display.display();
   }
   keyStillPressed = keyPad.isPressed();
