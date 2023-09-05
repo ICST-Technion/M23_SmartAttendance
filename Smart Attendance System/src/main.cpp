@@ -28,14 +28,17 @@ void init_wifi() {
     WiFi.mode(WIFI_STA);
     IPAddress dns(8,8,8,8);
     WiFi.begin("TechPublic2"); //TODO: Scan SSIDs.
-    Serial.print("Connecting to WiFi ..");
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        Serial.print('.');
-        delay(1000);
-    }
-    Serial.println(WiFi.localIP());
-    Serial.println(WiFi.dnsIP());
+}
+
+void connect_wifi() {
+  time_t before = millis();
+  Serial.print("Connecting to WiFi ..");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+      Serial.print('.');
+      delay(1000);
+  }
+  Serial.println("\nConnected after " + String(millis() - before) + " milis.");
 }
 
 void setup() {
@@ -43,6 +46,7 @@ void setup() {
   init_serial();
   init_i2c();
   init_wifi();
+  connect_wifi();
 
   // Init componenets.
   sas.init();

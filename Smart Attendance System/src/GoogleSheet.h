@@ -16,26 +16,28 @@ public:
     GoogleSheet& operator=(const GoogleSheet&) = delete;
 
     void readDataFromGoogleSheet(){
+        time_t before = millis();
         if (WiFi.status() != WL_CONNECTED) {
             throw std::runtime_error("WiFi not connected.");
         }
 
         Serial.println("Making a request");
         Serial.println(url);
-        http.begin(url.c_str()); //Specify the URL and certificate
+        http.begin(url.c_str());
         http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
         int httpCode = http.GET();
+        Serial.println("Response after " + String(millis() - before) + " millis.");
         String payload;
-        if (httpCode > 0) { //Check for the returning code
+        if (httpCode > 0) {
             payload = http.getString();
             Serial.println(httpCode);
             Serial.println(payload);
-            //display1.println(payload);
         }
         else {
             Serial.println("Error on HTTP request");
         }
         http.end();
+        Serial.println("Finished " + String(millis() - before) + " millis.");
     }
 
     void addAttendanceLogEntry(const String& entry) {
